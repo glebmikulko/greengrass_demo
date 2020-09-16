@@ -13,8 +13,7 @@ from uuid import uuid4
 
 parser = argparse.ArgumentParser(
     description="Robot simulator.")
-parser.add_argument('--endpoint', required=True, help="Your AWS IoT custom endpoint, not including a port. " +
-                                                      "Ex: \"abcd123456wxyz-ats.iot.us-east-1.amazonaws.com\"")
+parser.add_argument('--endpoint', required=True, help="Your AWS IoT custom endpoint, not including a port. ")
 parser.add_argument(
     '--cert', help="File path to your client certificate, in PEM format.")
 parser.add_argument(
@@ -23,7 +22,7 @@ parser.add_argument('--root-ca', help="File path to root certificate authority, 
                                       "Necessary if MQTT server uses a certificate that's not already in " +
                                       "your trust store.")
 parser.add_argument('--client-id', default="test-" +
-                    str(uuid4()), help="Client ID for MQTT connection.")
+                    str(uuid4()), help="Client ID for MQTT connection. Should be equal IoT Thing name")
 
 parser.add_argument('--thing-name', required=True, help="Thing name for the robot (should be unique).")
 
@@ -104,7 +103,7 @@ def change_shadow_value(order_id):
     mqtt_connection.publish(
     '$aws/things/{}/shadow/update'.format(args.thing_name),
     json.dumps(request),
-    mqtt.QoS(1))
+    mqtt.QoS(0))
 
 if __name__ == '__main__':
     # Spin up resources
@@ -114,6 +113,7 @@ if __name__ == '__main__':
 
     mqtt_connection = mqtt_connection_builder.mtls_from_path(
         endpoint=args.endpoint,
+        port=8883,
         cert_filepath=args.cert,
         pri_key_filepath=args.key,
         client_bootstrap=client_bootstrap,
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     print("Subscribing to topic '{}'...".format(update_accepted_topic))
     subscribe_future, packet_id = mqtt_connection.subscribe(
         topic=update_accepted_topic,
-        qos=mqtt.QoS.AT_LEAST_ONCE,
+        qos=mqtt.QoS.AT_MOST_ONCE,
         callback=on_order_accepted)
 
     subscribe_result = subscribe_future.result()

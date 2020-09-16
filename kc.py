@@ -12,8 +12,7 @@ from uuid import uuid4
 
 parser = argparse.ArgumentParser(
     description="Kitchen coordinator simulator.")
-parser.add_argument('--endpoint', required=True, help="Your AWS IoT custom endpoint, not including a port. " +
-                                                      "Ex: \"abcd123456wxyz-ats.iot.us-east-1.amazonaws.com\"")
+parser.add_argument('--endpoint', required=True, help="Your AWS IoT custom endpoint, not including a port. ")
 parser.add_argument(
     '--cert', help="File path to your client certificate, in PEM format.")
 parser.add_argument(
@@ -92,7 +91,7 @@ def on_update_accepted(topic, payload, **kwargs):
     mqtt_connection.publish(
         topic=robot_topic,
         payload=json.dumps(order_info),
-        qos=mqtt.QoS.AT_LEAST_ONCE)
+        qos=mqtt.QoS.AT_MOST_ONCE)
 
 
 if __name__ == '__main__':
@@ -103,6 +102,7 @@ if __name__ == '__main__':
 
     mqtt_connection = mqtt_connection_builder.mtls_from_path(
         endpoint=args.endpoint,
+        port=8883,
         cert_filepath=args.cert,
         pri_key_filepath=args.key,
         client_bootstrap=client_bootstrap,
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     print("Subscribing to topic '{}'...".format(update_accepted_topic))
     subscribe_future, packet_id = mqtt_connection.subscribe(
         topic=update_accepted_topic,
-        qos=mqtt.QoS.AT_LEAST_ONCE,
+        qos=mqtt.QoS.AT_MOST_ONCE,
         callback=on_update_accepted)
 
     subscribe_result = subscribe_future.result()

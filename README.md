@@ -57,6 +57,8 @@ Python 3.8.1
 Docker 19.03.5
 
 ## Setup
+Make sure, you've created the Greengrass group, added devices, and set up subscriptions.
+
 To run Greengrass Core via docker:
 ```bash
 docker run --rm --init -it --name aws-iot-greengrass \
@@ -70,15 +72,23 @@ amazon/aws-iot-greengrass:latest
 ```
 `logs` and `deployment` should be empty before the first start.
 
+Now you can deploy your Greengrass setup to the local core.
+
 In order to run KC, please type:
 ```bash
 python kc.py  \
 --endpoint <endpoint> \
 --cert /path/to/<hash>-setup/certs/<hash>.cert.pem \
 --key /path/to/<hash>-setup/certs/<hash>.private.key \
---root-ca /path/to/<hash>-setup/certs/root.ca.pem
+--root-ca /path/to/group.ca.pem \
+--client-id <KC-thing-name>
 ```
-Make sure you have `root.ca.pem` from aws site.
+Few notes here:
+- `<endpoint>` should point to local ip address (e.g. 127.0.0.1). The exact value can be determined from `samples/basic_discovery.py`
+- group.ca.pem should be **Greengrass group certificate** and not root AWS .pem file in case you use local endpoint. To obtain it check `samples/basic_discovery.py`
+- client-id value should be equal to AWS Thing name.
+- port in the script should be excplicitly set to 8883 (or your custom port)
+- QoS inside local network communication should be set to 0 (AT_MOST_ONCE)
 
 In a similar way you can start Robot simulator(s):
 ```bash
@@ -86,8 +96,9 @@ python robot.py  \
 --endpoint <endpoint> \
 --cert /path/to/<robot-hash>-setup/<robot-hash>.cert.pem \
 --key /path/to/<robot-hash>-setup/<robot-hash>.private.key \
---root-ca /path/to/<core-hash>-setup/certs/root.ca.pem \
---thing-name <robot-thing-name>
+--thing-name <robot-thing-name> \
+--root-ca /path/to/group.ca.pem \
+--client-id <robot-thing-name>
 ```
 `thing-name` is not ARN but the short name of the AWS IoT device.
 
